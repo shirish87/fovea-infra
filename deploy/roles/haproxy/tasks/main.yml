@@ -1,0 +1,52 @@
+---
+- name: Install dependencies
+  apt: pkg=libpcre3-dev state=installed
+
+- name: Download HAProxy package
+  get_url: url={{ haproxy_url }} dest=/tmp/haproxy-{{ haproxy_version }}.tar.gz
+
+- name: Extract packge
+  unarchive: src=/tmp/haproxy-{{ haproxy_version }}.tar.gz dest=/tmp copy=no
+
+- name: Build package
+  command: make TARGET=linux2628 USE_OPENSSL=1 USE_PCRE=1 USE_LIBCRYPT=1 USE_LINUX_SPLICE=1
+  args:
+    chdir: /tmp/haproxy-{{ haproxy_version }}
+
+- name: Install package
+  command: make install
+  args:
+    chdir: /tmp/haproxy-{{ haproxy_version }}
+
+- name: Create haproxy group
+  group: name=haproxy state=present
+
+- name: Create new user haproxy
+  user: name=haproxy state=present group=haproxy groups="sudo" home=/var/lib/haproxy append=yes
+
+- name: Setup error pages
+  shell: mkdir -p /etc/haproxy/errors && cp examples/errorfiles/* /etc/haproxy/errors
+  args:
+    chdir: /tmp/haproxy-{{ haproxy_version }}
+
+- name: Setup haproxy service
+  copy: src='haproxy' dest='/etc/init.d/haproxy'
+
+- name: Install haproxy service
+  shell: chmod +x /etc/init.d/haproxy && update-rc.d haproxy defaults
+
+- name: Setup haproxy defaults
+  copy: src='default.cfg' dest='/etc/default/haproxy'
+  tags:
+   - haproxy_install
+
+- name: configure haproxy
+  template: src=main.cfg dest=/etc/haproxy/haproxy.cfg
+  notify: reload haproxy
+  tags:
+    - haproxy_configure
+
+- name: start haproxy
+  service: name=haproxy state=running
+  tags:
+    - haproxy_service

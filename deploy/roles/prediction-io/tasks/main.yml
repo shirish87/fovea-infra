@@ -1,0 +1,85 @@
+---
+- name: Verify JAVA_HOME path
+  stat: path={{ java_home }}
+  register: p
+
+- name: Check JAVA_HOME exists
+  debug: msg="Path exists and is a directory"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: Create apps directory if it doesn't exist
+  file: path=/home/{{ deploy_user }}/apps state=directory owner={{ deploy_user }} group={{ deploy_group }}
+
+- name: Download Prediction.io {{ pio_url }}
+  get_url: url={{ pio_url }} dest=/tmp/{{ pio_file }}
+
+- name: Extract Prediction.io tar
+  unarchive: src=/tmp/{{ pio_file }} dest={{ deploy_apps }} copy=no
+
+- name: Cleanup
+  file: path=/tmp/{{ pio_file }} state=absent
+
+- name: Create vendors directory if it doesn't exist
+  file: path={{ pio_vendors_home }} state=directory
+
+- name: Download Apache Spark {{ spark_url }}
+  get_url: url={{ spark_url }} dest=/tmp/{{ spark_file }}
+
+- name: Extract Apache Spark
+  unarchive: src=/tmp/{{ spark_file }} dest={{ pio_vendors_home }} copy=no
+
+- name: Rename Apache Spark instance
+  shell: mv "{{ pio_vendors_home }}/spark-{{ spark_version }}-bin-hadoop2.4" "{{ spark_home }}"
+
+- name: Cleanup
+  file: path=/tmp/{{ spark_file }} state=absent
+
+- name: Configure Prediction.io with Apache Spark
+  replace: dest={{ pio_home }}/conf/pio-env.sh regexp="^(SPARK_HOME)=.*$" replace="\1={{ spark_home }}"
+
+- name: Download Elasticsearch
+  get_url: url={{ elasticsearch_url }} dest=/tmp/{{ elasticsearch_file }}
+
+- name: Extract Elasticsearch
+  unarchive: src=/tmp/{{ elasticsearch_file }} dest={{ pio_vendors_home }} copy=no
+
+- name: Configure Elasticsearch
+  file: path={{ elasticsearch_conf }} state=touch
+
+- name: Configure Elasticsearch host
+  lineinfile:
+    'dest={{ elasticsearch_conf }}
+    line="network.host: 127.0.0.1"
+    state=present
+    insertafter=EOF'
+
+- name: Cleanup
+  file: path=/tmp/{{ elasticsearch_file }} state=absent
+
+- name: Download HBase
+  get_url: url={{ hbase_url }} dest=/tmp/{{ hbase_file }}
+
+- name: Extract HBase
+  unarchive: src=/tmp/{{ hbase_file }} dest={{ pio_vendors_home }} copy=no
+
+- name: Rename HBase instance
+  shell: mv "{{ pio_vendors_home }}/hbase-{{ hbase_version }}-hadoop2" "{{ hbase_home }}"
+
+- name: Configure HBase site
+  action: template src=hbase-site.xml dest={{ hbase_home }}/conf/hbase-site.xml
+
+- name: Set JAVA_HOME for HBase
+  replace: dest={{ hbase_home }}/conf/hbase-env.sh regexp="^(export JAVA_HOME)=.*$" replace="\1={{ java_home }}"
+
+- name: Cleanup
+  file: path=/tmp/{{ hbase_file }} state=absent
+
+- name: Add environment variables
+  lineinfile:
+    dest="{{ deploy_home }}/.profile"
+    line="export PATH={{ pio_home }}/bin:{{ spark_home }}/bin:{{ hbase_home }}/bin:{{ elasticsearch_home }}/bin:$PATH"
+    state=present
+    insertafter=EOF
+
+- name: Set ownership of Prediction.io
+  file: path="{{ pio_home }}" owner={{ deploy_user }} group={{ deploy_group }} recurse=yes

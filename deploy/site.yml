@@ -1,0 +1,22 @@
+---
+- name: Setup fovea-web server
+  hosts: prod
+  gather_facts: no
+  sudo: yes
+  roles:
+    - common
+    - jdk9
+    - sendmail
+    - supervisor
+    - supervisor-crashmail
+    - nginx
+    - sbt
+    - python
+    - node
+    - node-modules
+    - mongodb
+    - rvm_io.rvm1-ruby
+    - opencv
+    - swap
+    - prediction-io
+    - haproxy

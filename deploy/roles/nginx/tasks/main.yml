@@ -1,0 +1,4 @@
+---
+- name: Ensure required packages are installed
+  apt: name=nginx state=latest update_cache=false
+  notify: restart nginx

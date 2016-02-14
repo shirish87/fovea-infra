@@ -1,0 +1,25 @@
+---
+- name: Ensure pip is installed
+  apt: name=python-pip state=latest update_cache=false
+
+- name: Install libraries with pip
+  action: pip name=supervisor state=present
+
+- name: Create supervisord folders
+  action: file dest={{ item }} state=directory owner=root
+  with_items:
+    - /etc/supervisor
+    - /etc/supervisor/conf.d
+    - /var/log/supervisor
+
+- name: Create supervisord config
+  action: template src=supervisord.conf dest=/etc/supervisor/supervisord.conf owner=root group=root
+
+- name: Symlink to original supervisord conf location
+  file: src=/etc/supervisor/supervisord.conf dest=/etc/supervisord.conf owner=root group=root state=link
+
+- name: Create supervisord init script
+  action: template src=supervisord dest=/etc/init.d/supervisord mode=0755
+
+- name: Start supervisord service
+  action: service name=supervisord state=started enabled=yes

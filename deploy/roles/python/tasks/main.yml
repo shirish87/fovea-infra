@@ -1,0 +1,9 @@
+---
+- name: Install Python dev tools
+  apt: name={{ item }} state=latest update_cache=false
+  sudo: true
+  with_items:
+    - python-apt
+    - python-pip
+    - python-dev
+    - python-virtualenv

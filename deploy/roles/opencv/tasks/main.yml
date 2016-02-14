@@ -1,0 +1,50 @@
+---
+- name: Remove any previous opencv tmp dir /tmp/opencv
+  file: path=/tmp/opencv state=absent
+
+- name: Download opencv tar {{ opencv_bin_url }}
+  get_url: url={{ opencv_bin_url }} dest=/tmp/{{ opencv_file }}
+
+- name: Create apps directory for opencv bin
+  file: path={{ deploy_apps }} state=directory owner={{ deploy_user }} group={{ deploy_group }}
+
+- name: Extract opencv tar
+  unarchive: src=/tmp/{{ opencv_file }} dest={{ deploy_apps }} copy=no
+
+- name: Update pkgconfig
+  replace: dest={{ opencv_home }}/{{ pkgconfig_path }} regexp="^(prefix)=.*$" replace="\1={{ opencv_home }}"
+
+- name: Cleanup
+  file: path=/tmp/{{ opencv_file }} state=absent
+
+- name: Install dependencies
+  apt: pkg={{ item }} state=installed update_cache=false
+  with_items:
+    - python-pip
+    - python-dev
+    - python-numpy
+    - libjpeg-dev
+    - libjasper-dev
+    - libpng-dev
+    - libtiff4-dev
+    - libtbb2
+    - libtbb-dev
+    - openexr
+    - libgtk2.0-0
+    - libqt4-core
+    - libqtgui4
+    - libv4l-dev
+
+- name: Install required Python packages
+  pip: name=pillow
+
+- name: Add environment variables
+  lineinfile:
+    dest="{{ deploy_home }}/.profile"
+    line="{{ item }}"
+    state=present
+    insertafter=EOF
+  with_items:
+    - export PYTHONPATH={{ opencv_home }}/lib/python2.7/site-packages
+    - export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
+    - export PKG_CONFIG_PATH={{ opencv_home }}/lib/pkgconfig

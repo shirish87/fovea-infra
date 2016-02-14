@@ -1,0 +1,17 @@
+---
+- name: Install superlance with pip
+  action: pip name=superlance state=present
+  sudo: true
+
+- name: Enable supervisord/superlance crashmail
+  lineinfile: 
+    dest=/etc/supervisor/supervisord.conf
+    regexp="{{ item.regexp }}"
+    line="{{ item.line }}"
+  with_items:
+    - { regexp: '^\[eventlistener:crashmail\]', line: '\n[eventlistener:crashmail]' }
+    - { regexp: '^command=/usr/local/bin/crashmail', line: 'command=/usr/local/bin/crashmail -a -m __redacted__@gmail.com' }
+    - { regexp: '^events=PROCESS_STATE', line: 'events=PROCESS_STATE' }
+
+- name: make sure supervisor is running and picks up latest .conf
+  action: service name=supervisord state=restarted

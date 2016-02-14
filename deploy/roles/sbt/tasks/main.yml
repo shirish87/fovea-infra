@@ -1,0 +1,9 @@
+---
+- name: Download SBT {{ sbt_version }}
+  get_url: dest=/tmp url=http://dl.bintray.com/sbt/debian/sbt-{{ sbt_version }}.deb
+
+- name: Install SBT {{ sbt_version }}
+  apt: deb=/tmp/sbt-{{ sbt_version }}.deb
+
+- name: Cleanup
+  file: path=/tmp/sbt-{{ sbt_version }}.deb state=absent

@@ -1,0 +1,65 @@
+---
+# deploy_user and many other tasks
+deploy_user: deploy
+deploy_group: deploy
+deploy_home: /home/{{ deploy_user }}
+deploy_apps: "{{ deploy_home }}/apps"
+
+java_home: /usr/lib/jvm/java-8-oracle
+java9_home: /usr/lib/jvm/java-9-oracle
+sbt_version: 0.13.9
+
+# node
+node_version: 4.2.1
+
+# sendmail
+test_mail_to: __redacted__@gmail.com
+
+# swap
+swap_size: 4G
+swap_swappiness: 10
+swap_vfs_cache_pressure: 50
+
+# opencv
+platform_version: 14.04
+opencv_tmp: /tmp/opencv_bin
+opencv_version: 2.4.10
+opencv_install_dir: /usr/local
+opencv_file: opencv-{{ opencv_version }}-{{ platform_version }}.tar.gz
+opencv_bin_url: https://dl.dropboxusercontent.com/u/__redacted__
+opencv_home: "{{ deploy_apps }}/opencv"
+pkgconfig_path: lib/pkgconfig/opencv.pc
+
+# prediction-io
+pio_version: 0.8.6
+pio_file: PredictionIO-{{ pio_version }}.tar.gz
+pio_url: http://download.prediction.io/{{ pio_file }}
+pio_home: "{{ deploy_apps }}/PredictionIO-{{ pio_version }}"
+pio_vendors_home: "{{ pio_home }}/vendors"
+
+spark_version: 1.2.0
+spark_file: spark-{{ spark_version }}-bin-hadoop2.4.tgz
+spark_url: http://d3kbcqa49mib13.cloudfront.net/{{ spark_file }}
+spark_home: "{{ pio_vendors_home }}/spark-{{ spark_version }}"
+
+elasticsearch_version: 1.4.2
+elasticsearch_file: elasticsearch-{{ elasticsearch_version }}.tar.gz
+elasticsearch_url: https://download.elasticsearch.org/elasticsearch/elasticsearch/{{ elasticsearch_file }}
+elasticsearch_home: "{{ pio_vendors_home }}/elasticsearch-{{ elasticsearch_version }}"
+elasticsearch_conf: "{{ elasticsearch_home }}/config/elasticsearch.yml"
+
+hbase_version: 0.98.6
+hbase_file: hbase-{{ hbase_version }}-hadoop2-bin.tar.gz
+hbase_url: http://archive.apache.org/dist/hbase/hbase-{{ hbase_version }}/{{ hbase_file }}
+hbase_home: "{{ pio_vendors_home }}/hbase-{{ hbase_version }}"
+
+zookeeper_home: "{{ pio_vendors_home }}/zookeeper"
+
+rvm1_rubies:
+  - 'ruby-2.2.2'
+
+rvm1_install_flags: '--auto-dotfiles --user-install'
+rvm1_install_path: "{{ deploy_home }}/.rvm"
+
+haproxy_version: 1.6.3
+haproxy_url: http://www.haproxy.org/download/1.6/src/haproxy-1.6.3.tar.gz

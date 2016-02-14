@@ -1,0 +1,31 @@
+---
+- name: Add JDK ppa
+  apt_repository: repo='ppa:webupd8team/java'
+
+- name: Automatically select the Oracle License
+  shell: echo debconf shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections
+
+- name: Update APT package cache
+  action: apt update_cache=yes
+
+- name: Install Java 8
+  apt: pkg=oracle-java8-installer state=latest install_recommends=yes
+
+- name: Set Java 8 Env
+  action: apt pkg=oracle-java8-set-default state=latest install_recommends=yes
+
+- name: Verify JAVA_HOME path
+  stat: path={{ java_home }}
+  register: p
+
+- name: Check JAVA_HOME exists
+  debug: msg="Path exists and is a directory"
+  when: p.stat.isdir is defined and p.stat.isdir
+
+- name: Add JAVA_HOME environment variable
+  sudo: False
+  lineinfile:
+    dest=~/.profile
+    line="export JAVA_HOME={{ java_home }}"
+    state=present
+    insertafter=EOF
